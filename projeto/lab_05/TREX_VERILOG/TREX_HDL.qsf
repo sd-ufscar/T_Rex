@@ -1,0 +1,51 @@
+# Revisao de contingencia: mesma logica, entrada Verilog sem arquivo .bdf.
+set_global_assignment -name FAMILY "Cyclone II"
+set_global_assignment -name DEVICE EP2C20F484C7
+set_global_assignment -name TOP_LEVEL_ENTITY TREX_TOP
+set_global_assignment -name VERILOG_FILE TREX_TOP.v
+set_global_assignment -name VERILOG_FILE video_PLL.v
+set_global_assignment -name VERILOG_FILE VGA_SYNC.v
+set_global_assignment -name VERILOG_FILE DinoGame.v
+set_global_assignment -name VERILOG_FILE DinoDraw.v
+set_global_assignment -name SDC_FILE TREX_VERILOG.sdc
+set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
+
+set_location_assignment PIN_L1 -to CLOCK_50
+set_location_assignment PIN_R22 -to KEY[0]
+set_location_assignment PIN_R21 -to KEY[1]
+set_location_assignment PIN_T22 -to KEY[2]
+set_location_assignment PIN_T21 -to KEY[3]
+set_location_assignment PIN_D9 -to VGA_R[0]
+set_location_assignment PIN_C9 -to VGA_R[1]
+set_location_assignment PIN_A7 -to VGA_R[2]
+set_location_assignment PIN_B7 -to VGA_R[3]
+set_location_assignment PIN_B8 -to VGA_G[0]
+set_location_assignment PIN_C10 -to VGA_G[1]
+set_location_assignment PIN_B9 -to VGA_G[2]
+set_location_assignment PIN_A8 -to VGA_G[3]
+set_location_assignment PIN_A9 -to VGA_B[0]
+set_location_assignment PIN_D11 -to VGA_B[1]
+set_location_assignment PIN_A10 -to VGA_B[2]
+set_location_assignment PIN_B10 -to VGA_B[3]
+set_location_assignment PIN_A11 -to VGA_HS
+set_location_assignment PIN_B11 -to VGA_VS
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to CLOCK_50
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_R[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_R[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_R[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_R[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_G[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_G[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_G[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_G[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_B[0]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_B[1]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_B[2]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_B[3]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_HS
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to VGA_VS
