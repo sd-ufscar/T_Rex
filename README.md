@@ -60,15 +60,3 @@ Com o projeto programado na DE1, pressionar **KEY0** para iniciar. Durante a par
 3. Conferir o dispositivo `EP2C20F484C7`, o topo `Block1` e os pinos da DE1.
 4. Executar **Processing → Start Compilation**; somente após sucesso, programar o `.sof` recém-gerado em modo JTAG.
 5. Seguir o [guia de compilação e programação](docs/07-quartus.md).
-
-## Teste funcional
-
-Foi executado um [workflow de validação Verilog](.github/workflows/validar-verilog.yml) no próprio repositório, com análise do topo HDL e execução de [`tb_DinoGame.v`](projeto/lab_05/TREX_VERILOG/tb_DinoGame.v). A execução de 6 de novembro de 2026 terminou com **sucesso**. A compilação no Quartus e a gravação na placa não foram repetidas nessa verificação. [Abrir execuções](https://github.com/sd-ufscar/T_Rex/actions).
-
-## Preservação e créditos
-
-O arquivo **[`lab_05.7z`](lab_05.7z) foi preservado**, sem substituição. O [inventário da extração](INVENTARIO_EXTRACAO.md) identifica fontes publicadas e arquivos regeneráveis mantidos apenas no compactado. O [README original do projeto](projeto/lab_05/TREX_VERILOG/README.md) também permanece acessível.
-
-Prática desenvolvida na disciplina de Sistemas Digitais (Turma C, 2026), Prof. Dr. Emerson Carlos Pedrino, UFSCar. Filipe Gonçalves dos Santos Dameto; Enrique Abrahão Mantovani; Bruno Henrique Julião; João Carlos Amaro da Silva Neto.
-
-Este tutorial segue a organização didática do repositório de referência [tic_tac_toe](https://github.com/sd-ufscar/tic_tac_toe), **sem modificar esse repositório**.
