@@ -1,0 +1,75 @@
+name: Extract T-Rex project (one-time)
+on:
+  push:
+    paths:
+      - .github/workflows/extract-project.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract original lab_05.7z and inventory
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v 7z >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq p7zip-full
+          fi
+          mkdir -p _temp_extract
+          7z x -y -o_temp_extract lab_05.7z >/tmp/unpack.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import shutil, hashlib
+          src = Path('_temp_extract').resolve()
+          dst = Path('projeto').resolve()
+          exclude_dirs={'db','incremental_db','greybox_tmp','output_files','.git','__pycache__'}
+          exclude_ext={'.qws','.bak','.log','.rpt','.smsg','.rdb','.cdb','.hdb','.ddb','.qdb','.sof','.pof'}
+          files=sorted(p for p in src.rglob('*') if p.is_file())
+          if not files or len(files)>10000:
+              raise RuntimeError(f'Unexpected archive file count: {len(files)}')
+          keep=[]; skip=[]; total=0
+          for p in files:
+              if p.is_symlink() or not p.resolve().is_relative_to(src):
+                  raise RuntimeError('Unsafe archive path: '+str(p))
+              rel=p.relative_to(src)
+              if any(v.lower() in exclude_dirs for v in rel.parts) or p.suffix.lower() in exclude_ext:
+                  skip.append(str(rel)); continue
+              n=p.stat().st_size
+              total+=n
+              if n>40*1024*1024 or total>140*1024*1024:
+                  raise RuntimeError('Archive too large; manual verification needed')
+              target=dst/rel
+              target.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(p,target)
+              keep.append((str(rel),n,hashlib.sha256(p.read_bytes()).hexdigest()))
+          lines=['# Inventário da extração','',
+                 'Fonte: arquivo original `lab_05.7z`, preservado na raiz.','',
+                 f'Arquivos no arquivo: {len(files)}; publicados: {len(keep)}; regeneráveis omitidos: {len(skip)}.','',
+                 '| Caminho relativo à pasta projeto | Tamanho (bytes) | SHA-256 |',
+                 '|---|---:|---|']
+          lines += [f'| `{name.replace("|","-")}` | {size} | `{digest}` |' for name,size,digest in keep]
+          lines += ['', '## Arquivos regeneráveis não versionados', '',
+                    'O arquivo compactado original conserva todos os itens abaixo.','']
+          lines += [f'- `{name}`' for name in skip]
+          Path('INVENTARIO_EXTRACAO.md').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+          print(f'Published {len(keep)} files, skipped {len(skip)} regenerable items')
+          PY
+          rm -rf _temp_extract
+      - name: Commit extracted project to T_Rex only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add projeto INVENTARIO_EXTRACAO.md
+          if git diff --cached --quiet; then
+            echo 'No files to commit'
+            exit 0
+          fi
+          git commit -m 'chore: extract original T-Rex project sources'
+          git push origin HEAD:main
