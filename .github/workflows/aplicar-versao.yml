@@ -1,0 +1,147 @@
+name: Aplicar pacote T-Rex atualizado (uso unico)
+on:
+  push:
+    paths:
+      - '.github/workflows/aplicar-versao.yml'
+permissions:
+  contents: write
+jobs:
+  migrar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extrair pacote novo de forma controlada
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v 7z >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full)
+          mkdir -p /tmp/trex_unpack
+          7z x -y -o/tmp/trex_unpack T_Rex-main_atualizado.7z >/dev/null
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, shutil
+          base = Path('/tmp/trex_unpack/T_Rex-main_atualizado/T_Rex-main/projeto/lab_05/TREX_VERILOG')
+          dest = Path('projeto')
+          required = '''Block1.bdf DIAGRAMA_MODULOS.png DIAGRAMA_MODULOS.svg
+          DinoDraw.bsf DinoDraw.v DinoGame.bsf DinoGame.v TREX_HDL.qpf TREX_HDL.qsf
+          TREX_TOP.v TREX_VERILOG.cdf TREX_VERILOG.fit.summary TREX_VERILOG.map.summary
+          TREX_VERILOG.pin TREX_VERILOG.qpf TREX_VERILOG.qsf TREX_VERILOG.sdc
+          TREX_VERILOG.sta.summary VGA_SYNC.bsf VGA_SYNC.v video_PLL.bsf
+          video_PLL.v'''.split()
+          new_outputs = '''TREX_VERILOG.sof TREX_VERILOG.pof TREX_VERILOG.flow.rpt
+          TREX_VERILOG.fit.rpt TREX_VERILOG.sta.rpt TREX_VERILOG.map.rpt'''.split()
+          source = required + new_outputs
+          if not all((base/f).is_file() for f in source):
+              raise RuntimeError('Faltam arquivos necessarios da versao atualizada')
+          v=(base/'DinoGame.v').read_text(encoding='utf-8')
+          d=(base/'DinoDraw.v').read_text(encoding='utf-8')
+          if 'jumping_up' not in v or 'wire collision' not in v or 'bird_pixel' in d or 'seven_segments' in d:
+              raise RuntimeError('Conteudo inesperado nos arquivos Verilog atualizados')
+          previous = Path('projeto/lab_05/TREX_VERILOG')
+          unchanged=changed=added=0
+          for f in source:
+              p=previous/f
+              if not p.is_file():added+=1
+              elif p.read_bytes()==(base/f).read_bytes():unchanged+=1
+              else:changed+=1
+          print(f'Conferencia: {unchanged} identicos, {changed} modificados, {added} novos; total {len(source)}')
+          # Remove a estrutura anterior e publica uma pasta unica, sem snapshots.
+          shutil.rmtree(dest)
+          dest.mkdir()
+          for f in source:shutil.copy2(base/f,dest/f)
+          PY
+          cat > projeto/tb_DinoGame.v <<'EOF'
+          // Teste funcional da implementacao simplificada, sem placar ou pterodactilo.
+          `timescale 1ns/1ps
+          module tb_DinoGame;
+              reg CLOCK_50 = 1'b0;
+              reg [3:0] KEY = 4'b1111;
+              reg frame_tick = 1'b0;
+              wire [35:0] game_data;
+              integer k;
+              reg [7:0] peak;
+              always #10 CLOCK_50 = ~CLOCK_50;
+              DinoGame dut (.CLOCK_50(CLOCK_50),.KEY(KEY),
+                            .frame_tick(frame_tick),.game_data(game_data));
+              task frame;
+                  begin
+                      @(negedge CLOCK_50); frame_tick = 1'b1;
+                      @(negedge CLOCK_50); frame_tick = 1'b0;
+                      repeat(3) @(negedge CLOCK_50);
+                  end
+              endtask
+              task key0_click;
+                  begin
+                      KEY[0] = 0; repeat(5) @(negedge CLOCK_50);
+                      KEY[0] = 1; repeat(5) @(negedge CLOCK_50);
+                  end
+              endtask
+              task key2_click;
+                  begin
+                      KEY[2] = 0; repeat(5) @(negedge CLOCK_50);
+                      KEY[2] = 1; repeat(5) @(negedge CLOCK_50);
+                  end
+              endtask
+              initial begin
+                  repeat(4) @(negedge CLOCK_50);
+                  KEY[3] = 0; repeat(4) @(negedge CLOCK_50);
+                  KEY[3] = 1; repeat(5) @(negedge CLOCK_50);
+                  if (game_data[35:34] !== 2'd0) begin
+                      $display("ERRO: estado READY"); $finish(1);
+                  end
+                  key0_click; frame;
+                  if (game_data[35:34] !== 2'd1) begin
+                      $display("ERRO: inicio por KEY0"); $finish(1);
+                  end
+                  if (game_data[14:0] !== 15'd0) begin
+                      $display("ERRO: campos reservados"); $finish(1);
+                  end
+                  key0_click; frame;
+                  if (game_data[33:26] == 0) begin
+                      $display("ERRO: salto nao iniciado"); $finish(1);
+                  end
+                  peak = game_data[33:26];
+                  for(k=0;k<30;k=k+1) begin
+                      frame;
+                      if (game_data[33:26] > peak) peak = game_data[33:26];
+                  end
+                  if(peak !== 8'd78 || game_data[33:26] !== 8'd0) begin
+                      $display("ERRO: subida/descida linear, pico=%d final=%d",peak,game_data[33:26]);
+                      $finish(1);
+                  end
+                  key2_click; frame;
+                  if(game_data[35:34] !== 2'd0) begin
+                      $display("ERRO: KEY2 nao retornou a READY"); $finish(1);
+                  end
+                  key0_click; frame;
+                  for(k=0;k<175;k=k+1) frame;
+                  if(game_data[35:34] !== 2'd2) begin
+                      $display("ERRO: colisao com cacto"); $finish(1);
+                  end
+                  $display("OK: estados, salto linear, retorno e colisao com cacto");
+                  $finish;
+              end
+          endmodule
+          EOF
+          rm -f lab_05.7z T_Rex-main_atualizado.7z INVENTARIO_EXTRACAO.md
+      - name: Validar a implementacao atualizada com Icarus Verilog
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq iverilog
+          cd projeto
+          iverilog -g2005-sv -Wall -s TREX_TOP -tnull TREX_TOP.v DinoGame.v DinoDraw.v VGA_SYNC.v video_PLL.v
+          iverilog -g2005-sv -Wall -s tb_DinoGame -o /tmp/teste_trex DinoGame.v tb_DinoGame.v
+          vvp /tmp/teste_trex | tee /tmp/resultado.txt
+          grep -F 'OK: estados, salto linear, retorno e colisao com cacto' /tmp/resultado.txt
+      - name: Versionar somente projeto atualizado e limpeza
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A -- projeto lab_05.7z T_Rex-main_atualizado.7z INVENTARIO_EXTRACAO.md
+          git diff --cached --stat
+          git commit -m 'feat: replace legacy T-Rex files with simplified updated project'
+          git push origin HEAD:main
