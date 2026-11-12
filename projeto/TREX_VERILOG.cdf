@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EP2C20F484) Path("C:/Users/856246/Desktop/TREX_VERILOG/") File("TREX_VERILOG.sof") MfrSpec(OpMask(1));
+		Device PartName(EP2C20F484) Path("C:/Users/858171/Desktop/T_Rex-main/T_Rex-main/projeto/lab_05/TREX_VERILOG/") File("TREX_VERILOG.sof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

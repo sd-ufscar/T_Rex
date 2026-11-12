@@ -1,14 +1,14 @@
-Fitter Status : Successful - Tue Oct 27 14:00:24 2026
+Fitter Status : Successful - Tue Nov 10 17:00:06 2026
 Quartus II 64-Bit Version : 13.0.1 Build 232 06/12/2013 SP 1 SJ Web Edition
 Revision Name : TREX_VERILOG
 Top-level Entity Name : Block1
 Family : Cyclone II
 Device : EP2C20F484C7
 Timing Models : Final
-Total logic elements : 1,023 / 18,752 ( 5 % )
-    Total combinational functions : 1,019 / 18,752 ( 5 % )
-    Dedicated logic registers : 107 / 18,752 ( < 1 % )
-Total registers : 107
+Total logic elements : 774 / 18,752 ( 4 % )
+    Total combinational functions : 770 / 18,752 ( 4 % )
+    Dedicated logic registers : 77 / 18,752 ( < 1 % )
+Total registers : 77
 Total pins : 19 / 315 ( 6 % )
 Total virtual pins : 0
 Total memory bits : 0 / 239,616 ( 0 % )
