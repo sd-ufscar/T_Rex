@@ -1,62 +1,66 @@
-# T-Rex em FPGA — jogo com interface VGA
+# T-Rex em FPGA — projeto atual
 
-Implementação acadêmica de Sistemas Digitais, Engenharia de Computação — **Universidade Federal de São Carlos (UFSCar), 2026**. O projeto reproduz uma versão simplificada do jogo do dinossauro conhecido pelo Google Chrome, utilizando a **Terasic DE1 (Cyclone II)** e o **Quartus II 13.0 SP1**.
+Implementação didática de um jogo de corrida com salto e desvio de cactos, desenvolvida para a disciplina de **Sistemas Digitais — UFSCar (2026)**. O circuito é escrito em Verilog HDL, integrado no **Quartus II 13.0 SP1**, e utiliza a **Terasic DE1**, FPGA Cyclone II `EP2C20F484C7`, com monitor VGA.
 
-**O circuito é descrito em Verilog HDL.** Os quatro módulos são interligados pelo esquemático `Block1.bdf`. O repositório conserva o arquivo compactado original `lab_05.7z`, os fontes extraídos, os relatórios históricos, os testes e esta documentação.
+## Características
 
-| Característica | Configuração publicada |
+| Item | Implementação |
 |---|---|
-| FPGA | Terasic DE1, Cyclone II `EP2C20F484C7` |
-| Ambiente | Quartus II 13.0 SP1 |
-| Projeto principal | [`TREX_VERILOG.qpf`](projeto/lab_05/TREX_VERILOG/TREX_VERILOG.qpf) / topo [`Block1.bdf`](projeto/lab_05/TREX_VERILOG/Block1.bdf) |
-| Alternativa de topo | [`TREX_HDL.qpf`](projeto/lab_05/TREX_VERILOG/TREX_HDL.qpf) / [`TREX_TOP.v`](projeto/lab_05/TREX_VERILOG/TREX_TOP.v) |
-| Vídeo | VGA, **640 × 480**, 25 MHz de cadência de pixel, **~59,52 Hz** |
-| Controles | `KEY0` iniciar/saltar/recomeçar; `KEY1` agachar; `KEY2` voltar ao início; `KEY3` reset |
-| Elementos | Dinossauro, cacto, pterodáctilo, pontuação BCD, mensagens de início e fim |
+| Cena | Dinossauro, nuvens, solo e cactos |
+| Obstáculos | Um cacto móvel por vez |
+| Salto | Movimento vertical linear, passos de 6 pixels por quadro até 78 e retorno |
+| Estados | READY, RUN e OVER |
+| Controles | KEY0 inicia/salta/reinicia partida; KEY2 retorna à tela inicial; KEY3 reinicializa |
+| Vídeo | 640 × 480, varredura 800 × 525, habilitação de pixels a 25 MHz |
+| Placa e ambiente | Terasic DE1 clássica; Quartus II 13.0 SP1 |
+| Configuração | `projeto/TREX_VERILOG.qpf`, topo `Block1.bdf` |
+| Programação | Arquivos `.sof` e `.pof` produzidos pela compilação de 10/11/2026 |
 
-## Arquitetura e demonstração
+O pino **KEY1 não é utilizado pela lógica atual**. Não há marcador de pontuação na tela. A renderização utiliza retângulos em cores de cinza e uma fonte matricial para as mensagens `PRESS KEY0` e `GAME OVER`.
 
-![Diagrama de componentes originalmente incluído no projeto](projeto/lab_05/TREX_VERILOG/DIAGRAMA_MODULOS.png)
+## Arquitetura
 
-![Diagrama de integração do experimento](projeto/lab_05/diagrama_esquematico.png)
+![Diagrama dos quatro módulos](projeto/DIAGRAMA_MODULOS.svg)
 
-O módulo `video_PLL` não é uma PLL física: gera **pixel_enable** alternando a cada ciclo de 50 MHz. `VGA_SYNC` produz coordenadas, sincronismos e `frame_tick`; `DinoGame` atualiza as regras; `DinoDraw` desenha os pixels.
+- **`video_PLL.v`**: alterna `pixel_enable` no domínio de 50 MHz; não emprega PLL física.
+- **`VGA_SYNC.v`**: produz posição dos pixels, vídeo ativo, sincronismos VGA e `frame_tick`.
+- **`DinoGame.v`**: controla estados, salto linear, movimento do cacto, aceleração, intervalo entre obstáculos e colisão.
+- **`DinoDraw.v`**: calcula os pixels do personagem, do cacto, do solo, das nuvens e das mensagens.
+- **`game_data[35:0]`**: comunica estado, altura do salto e posição do cacto; os demais bits estão reservados.
 
-```mermaid
-flowchart LR
-  CLK["CLOCK_50 e KEY[3:0]"] --> PLL[video_PLL]
-  CLK --> SYNC[VGA_SYNC]
-  CLK --> GAME[DinoGame]
-  PLL -->|pixel_enable| SYNC
-  SYNC -->|pixel_x, pixel_y, video_on| DRAW[DinoDraw]
-  SYNC -->|frame_tick| GAME
-  GAME -->|game_data 35:0| DRAW
-  SYNC -->|VGA_HS e VGA_VS| MON[Monitor VGA]
-  DRAW -->|RGB 4 bits por canal| MON
-```
+## Como executar
 
-## Como jogar
+1. Clonar o repositório e abrir a pasta [`projeto/`](projeto/).
+2. No **Quartus II 13.0 SP1**, abrir [`TREX_VERILOG.qpf`](projeto/TREX_VERILOG.qpf) e conferir o dispositivo Cyclone II `EP2C20F484C7`.
+3. Abrir [`Block1.bdf`](projeto/Block1.bdf), revisar as conexões e o [arquivo QSF](projeto/TREX_VERILOG.qsf).
+4. Compilar ou utilizar o [`.sof` do pacote](projeto/TREX_VERILOG.sof) quando adequado para a placa e configuração.
+5. Gravar a FPGA no **Programmer**, modo JTAG, conectar o monitor VGA e utilizar os comandos da tabela.
 
-Com o projeto programado na DE1, pressionar **KEY0** para iniciar. Durante a partida, KEY0 solicita um salto e **KEY1**, enquanto pressionado, mantém o personagem agachado no solo. **KEY2** retorna à tela inicial e **KEY3** reinicializa o circuito. Após uma colisão, a mensagem `GAME OVER` aparece e KEY0 permite uma nova partida. Os botões são ativos em nível baixo.
-
-## Guia completo
-
-| Capítulo | Conteúdo |
+| Botão | Ação |
 |---|---|
-| [01 — Introdução](docs/01-introducao.md) | Objetivos, plataforma e fundamentos |
-| [02 — Arquitetura](docs/02-arquitetura.md) | Diagrama, interfaces e barramento de 36 bits |
-| [03 — VGA e temporização](docs/03-vga-temporizacao.md) | Habilitação de pixel, contadores e sincronismos |
-| [04 — Lógica do jogo](docs/04-dino-game.md) | Botões, máquina de estados, salto, pontuação |
-| [05 — Obstáculos e colisão](docs/05-obstaculos-colisao.md) | LFSR, velocidade, cacto e pterodáctilo |
-| [06 — Renderização](docs/06-dino-draw.md) | Sprites, fontes, cores e pontuação na tela |
-| [07 — Compilação e gravação](docs/07-quartus.md) | Revisões, pinos, Quartus e JTAG |
-| [08 — Resultados e testes](docs/08-resultados.md) | Fotos, testbench, Fitter e TimeQuest |
-| [09 — Validação e arquivos](docs/09-validacao.md) | Integridade, dependências e limites das verificações |
+| KEY0 | Iniciar, saltar durante RUN ou reiniciar após GAME OVER |
+| KEY1 | Sem função nesta implementação |
+| KEY2 | Voltar para READY |
+| KEY3 | Reset geral, ativo em nível baixo |
 
-## Reprodução rápida
+## Tutorial técnico
 
-1. Clonar o repositório completo, preservando a estrutura `projeto/lab_05/TREX_VERILOG/`.
-2. Abrir [`TREX_VERILOG.qpf`](projeto/lab_05/TREX_VERILOG/TREX_VERILOG.qpf) no Quartus II 13.0 SP1.
-3. Conferir o dispositivo `EP2C20F484C7`, o topo `Block1` e os pinos da DE1.
-4. Executar **Processing → Start Compilation**; somente após sucesso, programar o `.sof` recém-gerado em modo JTAG.
-5. Seguir o [guia de compilação e programação](docs/07-quartus.md).
+| Capítulo | Tema |
+|---|---|
+| [01 — Introdução](docs/01-introducao.md) | Contexto e componentes |
+| [02 — Arquitetura](docs/02-arquitetura.md) | Sinais e barramento de estado |
+| [03 — VGA](docs/03-vga-temporizacao.md) | Clock, contadores e sincronismos |
+| [04 — Lógica do jogo](docs/04-dino-game.md) | Máquina de estados e salto |
+| [05 — Cactos e colisão](docs/05-obstaculos-colisao.md) | Movimento e verificação da colisão |
+| [06 — Desenho gráfico](docs/06-dino-draw.md) | Pixels, cenário e mensagens |
+| [07 — Quartus e gravação](docs/07-quartus.md) | Compilação e programação |
+| [08 — Resultados](docs/08-resultados.md) | Fitter, TimeQuest e teste funcional |
+| [09 — Validação](docs/09-validacao.md) | Conferências e limites |
+
+## Verificação
+
+O [testbench `tb_DinoGame.v`](projeto/tb_DinoGame.v) exercita início, salto, retorno à tela de espera e colisão com cacto. O [workflow de validação](.github/workflows/validar-verilog.yml) compila o topo Verilog e executa a simulação com Icarus. Os relatórios [Fitter](projeto/TREX_VERILOG.fit.summary) e [TimeQuest](projeto/TREX_VERILOG.sta.summary) são provenientes da compilação do Quartus de **10 de novembro de 2026**. A verificação em hardware não foi refeita nesta revisão documental.
+
+As fontes, os esquemáticos, os relatórios e os arquivos de programação estão disponíveis individualmente na pasta [`projeto/`](projeto/), sem cópias de backup ou diretórios de cache.
+
+**Disciplina:** Sistemas Digitais, UFSCar, Engenharia de Computação, Turma C (2026). **Professor:** Emerson Carlos Pedrino.

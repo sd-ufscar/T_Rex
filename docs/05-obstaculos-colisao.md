@@ -1,34 +1,24 @@
-# 05 — Obstáculos, geração pseudoaleatória e colisões
+# 05 — Obstáculos e colisão
 
-## Um obstáculo de cada vez
+O jogo apresenta **um cacto por vez**, representado por `obstacle_x`, de 10 bits. A posição inicial do movimento visível é 639. Quando `obstacle_x = 700`, o obstáculo está fora da região de vídeo.
 
-O controlador guarda a coordenada `obstacle_x` em dez bits. O valor **700** indica ausência de obstáculo na tela. Quando um obstáculo é lançado, a posição passa a **639** e diminui a cada quadro de acordo com `speed`. O projeto não movimenta uma lista simultânea de obstáculos.
+A cada `frame_tick` em RUN, o cacto percorre a tela da direita para a esquerda. A velocidade inicial é 5 pixels por quadro; o contador `accel_count` permite aumentá-la progressivamente até o limite de 11, em intervalos de 360 quadros.
 
-A variável `bird` seleciona um de dois desenhos: **0=cacto**, **1=pterodáctilo**. Na primeira corrida o obstáculo inicial é um cacto; após a liberação de outros obstáculos, a seleção pode utilizar um bit pseudoaleatório.
+## Intervalo entre obstáculos
 
-## Pseudoaleatoriedade e intervalo
+Um registrador de deslocamento pseudoaleatório de oito bits (LFSR) determina o intervalo antes do próximo aparecimento. A semente é `8'hA5`; a espera é calculada como `25 + random_bits[5:0]`, em quadros. O tipo de obstáculo não varia.
 
-O código usa um registrador `random_bits` de oito bits, inicializado com `8'hA5`. A atualização desloca seus bits e calcula o novo bit a partir de XOR dos bits 7, 5, 4 e 3. Trata-se de um LFSR, portanto a sequência é determinística a partir da semente, não de aleatoriedade física.
+## Detecção de colisão
 
-O tipo pterodáctilo só pode ser selecionado após `score >= 12'h010` e quando `random_bits[0]` vale 1. O intervalo de espera é calculado a partir de **25 + random_bits[5:0]** quadros. A semente é reinicializada por KEY3.
+O código verifica a proximidade horizontal do cacto e a altura do personagem:
 
-## Aproximação das colisões
+```verilog
+wire near_cactus = (obstacle_x < 10'd109) &&
+                   (obstacle_x + 10'd22 > 10'd76);
+wire collision = (obstacle_x < 10'd640) &&
+                 near_cactus && (jump_y < 8'd42);
+```
 
-A detecção é por regiões e limites, não por comparação exaustiva dos pixels do sprite:
+A colisão ocorre quando as regiões horizontais se aproximam e o dinossauro está abaixo da altura de proteção. O teste utiliza limites geométricos simplificados, e não comparação individual de pixels do sprite.
 
-    near_cactus = (obstacle_x < 109) &&
-                  (obstacle_x + 22 > 76);
-    near_bird   = (obstacle_x < 125) &&
-                  (obstacle_x + 42 > 76);
-    collision = (obstacle_x < 640) &&
-                ((!bird && near_cactus && jump_y < 42) ||
-                 ( bird && near_bird && !ducking && jump_y < 45));
-
-O cacto exige altura suficiente para evitar a colisão. Para o pterodáctilo, o personagem pode se proteger agachando no chão ou alcançando altura suficiente. Quando a condição de colisão é detectada, `state` recebe OVER e a evolução normal do jogo é interrompida.
-
-## Considerações
-
-A mudança de obstáculo, a alteração da velocidade e a avaliação de colisão ocorrem na atualização de quadro. Esse arranjo tem resolução temporal discreta; os limites do teste são aproximados e foram escolhidos para o estilo visual simplificado.
-
----
-[Anterior](04-dino-game.md) · [Índice](../README.md#guia-completo) · [Próximo: desenho](06-dino-draw.md)
+[Anterior](04-dino-game.md) · [Índice](../README.md#tutorial-técnico) · [Desenho](06-dino-draw.md)

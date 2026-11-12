@@ -13,17 +13,17 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Instalar simulador livre
+      - name: Instalar simulador
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq iverilog
-      - name: Sintaxe e integracao do topo HDL
-        working-directory: projeto/lab_05/TREX_VERILOG
+      - name: Sintaxe dos modulos e integracao HDL
+        working-directory: projeto
         run: |
           iverilog -g2005-sv -Wall -s TREX_TOP -tnull TREX_TOP.v DinoGame.v DinoDraw.v VGA_SYNC.v video_PLL.v
-      - name: Testbench funcional do jogo
-        working-directory: projeto/lab_05/TREX_VERILOG
+      - name: Simulacao funcional atual
+        working-directory: projeto
         run: |
           iverilog -g2005-sv -Wall -s tb_DinoGame -o /tmp/trex_tb DinoGame.v tb_DinoGame.v
           vvp /tmp/trex_tb | tee /tmp/trex_result.txt
-          grep -F 'OK: inicio, score, salto, reinicio e colisao' /tmp/trex_result.txt
+          grep -F 'OK: estados, salto linear, retorno e colisao com cacto' /tmp/trex_result.txt

@@ -1,29 +1,13 @@
-# 01 — Introdução e fundamentos
+# 01 — Introdução
 
-## Objetivo
+O projeto implementa um jogo digital do tipo corrida infinita em FPGA, utilizando módulos Verilog combinados em uma folha esquemática do Quartus II. O personagem é representado em pixels, desloca-se verticalmente quando ocorre um salto e deve ultrapassar cactos que avançam da direita para a esquerda.
 
-O experimento implementa um jogo de corrida e desvio de obstáculos inteiramente em lógica digital, utilizando Verilog HDL e uma FPGA da placa Terasic DE1. O desenho é transmitido em VGA e a interação ocorre pelos quatro botões físicos.
+A plataforma é a **Terasic DE1 (Cyclone II EP2C20F484C7)**. A entrada CLOCK_50 de 50 MHz alimenta o processamento; uma habilitação determina o ritmo da varredura VGA. Os botões KEY0, KEY2 e KEY3 são utilizados para interação.
 
-## Plataforma
+### Principais conceitos
 
-| Recurso | Valor verificado |
-|---|---|
-| Placa | Terasic DE1 clássica |
-| FPGA | Cyclone II `EP2C20F484C7` |
-| Clock principal | `CLOCK_50`, 50 MHz |
-| IDE de referência | Quartus II 13.0 SP1 (13.0.1 Build 232) |
-| Integração | `Block1.bdf` ou `TREX_TOP.v` na revisão alternativa |
-| Saídas | `VGA_R/G/B[3:0]`, `VGA_HS`, `VGA_VS` |
+A lógica sequencial registra estado, altura, direção de salto, posição e velocidade do obstáculo, intervalo de espera e semente pseudoaleatória. A lógica combinacional verifica a colisão e desenha a cena no monitor. Não existe framebuffer: a cor de cada pixel é calculada a partir de suas coordenadas.
 
-## Conceitos aplicados
+Os arquivos estão diretamente na [pasta do projeto](../projeto/), com o [esquemático principal](../projeto/Block1.bdf), os quatro módulos Verilog e o teste funcional.
 
-Os registradores conservam o estado do jogo entre atualizações: altura do salto, velocidade, posição e tipo do obstáculo, pontuação, ritmo de animação e modo de operação. Circuitos combinacionais comparam posições e produzem pixels. A temporização de vídeo ocorre em um ritmo distinto da atualização da partida.
-
-O sistema não utiliza processador embarcado, software em tempo de execução, armazenamento de quadro completo ou ROM de sprites. O código gera os elementos por funções geométricas.
-
-## Arquivos essenciais
-
-Os fontes estão em [`projeto/lab_05/TREX_VERILOG/`](../projeto/lab_05/TREX_VERILOG/). O [diagrama de integração](../projeto/lab_05/diagrama_esquematico.png), o [teste funcional](../projeto/lab_05/TREX_VERILOG/tb_DinoGame.v) e os relatórios originais complementam o estudo.
-
----
-[Índice](../README.md#guia-completo) · [Próximo: arquitetura](02-arquitetura.md)
+[Voltar ao índice](../README.md#tutorial-técnico) · [Arquitetura](02-arquitetura.md)

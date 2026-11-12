@@ -1,0 +1,13 @@
+# Quartus II: bancos de dados e cache regeneravel
+db/
+incremental_db/
+*.bak
+*.qws
+*.done
+*.jdi
+*.smsg
+*.qmsg
+*.rdb
+*.cdb
+*.hdb
+*.ddb

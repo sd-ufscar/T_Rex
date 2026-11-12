@@ -16,7 +16,7 @@
 <text x="196" y="225">pixel_enable</text>
 <text x="528" y="225">HS/VS, x/y e frame_tick</text>
 <text x="528" y="255">contador 800 x 525</text>
-<text x="528" y="445">salto, obstaculos e pontos</text>
+<text x="528" y="445">salto, cacto e colisao</text>
 <text x="528" y="471">game_data[35..0]</text>
 <text x="890" y="225">desenha T-Rex e cenarios</text>
 <text x="890" y="255">RGB 4 bits/canal</text>
