@@ -1,0 +1,30 @@
+name: Comparar fontes HDL atualizados (temporario)
+on:
+  push:
+    paths:
+      - '.github/workflows/diff-versao.yml'
+permissions:
+  contents: read
+jobs:
+  comparar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Diff dos arquivos principais sem escrita
+        shell: bash
+        run: |
+          set -euo pipefail
+          command -v 7z >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq p7zip-full)
+          7z x -y -o/tmp/trex_in T_Rex-main_atualizado.7z >/dev/null
+          NEW=/tmp/trex_in/T_Rex-main_atualizado/T_Rex-main/projeto/lab_05/TREX_VERILOG
+          OLD=projeto/lab_05/TREX_VERILOG
+          for f in DinoGame.v DinoDraw.v Block1.bdf TREX_VERILOG.qsf TREX_VERILOG.fit.summary TREX_VERILOG.sta.summary; do
+            echo "============= DIFF $f ============="
+            diff -u "$OLD/$f" "$NEW/$f" | head -280 || true
+          done
+          echo '============= NEW Fitter and Timing summaries ============='
+          cat "$NEW/TREX_VERILOG.fit.summary"
+          cat "$NEW/TREX_VERILOG.sta.summary"
+          echo '============= NEW additional .qsf references ============='
+          grep -Ei 'TOP_LEVEL_ENTITY|VERILOG_FILE|BDF_FILE|QIP_FILE|SDC_FILE|DEVICE |FAMILY|LAST_QUARTUS_VERSION|ORIGINAL_QUARTUS_VERSION|set_location_assignment|NUMBER_OF_PROCESSORS' "$NEW/TREX_VERILOG.qsf" | head -100
